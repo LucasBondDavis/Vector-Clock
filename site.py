@@ -48,9 +48,9 @@ class Site(object):
         self.id = site_id 
         self.p = 0 # TODO: figure out way to have a process id
         self.dict = {}
+    # Put an item into the dictionary and log the operations
     def insert(self, name, flights, rebuild=False):
         self.time[self.p][self.p] += 1
-        print(self.time)
         if not set(flights).isdisjoint( \
                 set([i for res in self.dict.values() for i in res.flights])):
             print('Cannot schedule reservation for {}.'.format(name))
@@ -73,9 +73,9 @@ class Site(object):
                 pickle.dump(er, log)
     # When we know every other process know of an event, truncate the log
     def truncate(self):
-        pass
+        pass # TODO: implement this
     # View the contents of the log
-    def view_log(self):
+    def print_log(self):
         log = load_log()
         for er in log:
             print(er)
@@ -115,18 +115,9 @@ if __name__ == '__main__':
         dist_dict.delete('Arin')
 
     print('log')
-    dist_dict.view_log()
+    dist_dict.print_log()
     print('view')
     dist_dict.view()
     print('clock')
     dist_dict.clock()
-    
 
-    # Take User Input
-    #command = input()
-    #if 'reserve' in command:
-    #    pass
-    #if 'cancel' in command:
-    #    pass
-    #if 'view' in command:
-    #    pass
