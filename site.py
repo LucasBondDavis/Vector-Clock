@@ -93,7 +93,20 @@ class Site(object):
             if self.hasRec(Ti, fR, i) == False:
                 NE.add(fR)
         return NE
-    #
+    # update dictionary when calling the receive function
+    def update_vi(self, NE):
+        Vi = self.dict
+        #updating Vi is updating self.dict?
+        for eR in NE:
+            if eR.op == 'insert':
+                if eR.name in Vi and eR.time:
+                    # eR.name in Vi(self.dict) might happen if the client cancels a previous reservation and add a new one?
+                    print('overwriting an entry in dictionary')
+                Vi[eR.name] = Reservation(eR.flights)
+        for dR in NE:
+            if dR.op == 'delete' and dR.name in Vi and Vi[dR.name].flights == dR.flights: # comparing list in python, need changes?
+                Vi.pop[dR.name]
+    #update matrix clock.
     
     # When we know every other process know of an event, truncate the log
     def truncate(self):
