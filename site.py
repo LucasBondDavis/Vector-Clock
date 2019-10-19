@@ -72,8 +72,8 @@ class Site(object):
             if not rebuild:
                 pickle.dump(er, log)
     #part of the algorithm
-    def hasRec(self, eR, k):
-        return self.time[k][eR.node] >= eR.time
+    def hasRec(self, Ti, eR, k):
+        return Ti[k][eR.node] >= eR.time
     #figure out what NP is when sending a message to another site
     def get_NP(self, target_site_id):
         NP = set()
@@ -81,9 +81,19 @@ class Site(object):
         Ti = self.time
         PLi = load_log()
         for eR in PLi:
-            if self.hasRec(eR, j) == False:
+            if self.hasRec(Ti, eR, j) == False:
                 NP.add(eR)
         return NP
+    # figure out what NE is after received a message, and calling receive().
+    def get_NE(self, NP):
+        NE = set()
+        i = self.p
+        Ti = self.time
+        for fR in NP:
+            if self.hasRec(Ti, fR, i) == False:
+                NE.add(fR)
+        return NE
+    #
     
     # When we know every other process know of an event, truncate the log
     def truncate(self):
