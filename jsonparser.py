@@ -8,10 +8,15 @@ site info is also a dictionary with entries like 'ip_address' as key, and int or
 class jsonparser(object):
     def __init__(self, opened_file):
         self.reader = opened_file
+        self.number_of_sites = -1
     def get_dict(self):
         j_dict = json.load(self.reader)
         site_dict = j_dict['hosts'] # site_dict is a dictionary with keys as site id, value as a another dictionary with information
+        self.number_of_sites = len(site_dict)
         return site_dict
+    # REMARK: get_number_of_sites can only be called after calling get_dict() successfully.
+    def get_number_of_sites(self):
+        return self.number_of_sites
 
 if __name__ == '__main__':
     f = open('bin/knownhosts.json', 'r')
@@ -29,7 +34,7 @@ if __name__ == '__main__':
         print (site_id)
         for entry in siteDict[site_id]:
             print('\t' + entry + ' :' + str(siteDict[site_id][entry]) )
-    
+    print( j_parser.get_number_of_sites() )
     
     
     f.close()
