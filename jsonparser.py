@@ -34,6 +34,9 @@ if __name__ == '__main__':
         print (site_id)
         for entry in siteDict[site_id]:
             print('\t' + entry + ' :' + str(siteDict[site_id][entry]) )
+    
+    siteDict.pop('beta')
+    print(siteDict)
     print( j_parser.get_number_of_sites() )
     
     
