@@ -71,6 +71,10 @@ class Site(object):
             self.dict.pop(name)
             if not rebuild:
                 pickle.dump(er, log)
+    #part of the algorithm
+    def hasRec(self, eR, k):
+        return self.time[k][eR.node] >= eR.time
+    
     # When we know every other process know of an event, truncate the log
     def truncate(self):
         pass # TODO: implement this
