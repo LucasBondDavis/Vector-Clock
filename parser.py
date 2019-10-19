@@ -1,12 +1,12 @@
 import instruction as INS
 
 class parser(object):
-    def __init__(self, filename, debug):
-        self.file_name = filename
+    def __init__(self, debug):
+        #self.file_name = filename
         #self.fp = open(filename, 'r')
         self.is_debugging = debug
-    def close_file(self):
-        self.fp.close()
+    #def close_file(self):
+        #self.fp.close()
     #def open_file(self):
     
     def parse_line( self, string_line ):
@@ -77,7 +77,7 @@ class parser(object):
         #TO DO: add method to continue reading a file and return a list of instructions?
         
 if __name__ == '__main__':
-    ps = parser('1.txt', True) # file name doesn't matter in this test case.
+    ps = parser( True) # file name doesn't matter in this test case.
     ps.parse_line('reserve Taz 1,2')
     ps.parse_line('cancel Tazasdfasdfa')
     ps.parse_line('send banana')
