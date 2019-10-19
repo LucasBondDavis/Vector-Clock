@@ -4,7 +4,7 @@ import select
 from Site import *
 
 
-# TODO: make list of other sites and their IP addresses and Ports
+# TODO: make dictinary of other sites and their IP addresses and Ports
 # Set port and IP address for local site
 IP = '127.0.0.1'
 PORT = 8080

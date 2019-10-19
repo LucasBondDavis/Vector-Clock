@@ -71,6 +71,7 @@ class Site(object):
             self.dict.pop(name)
             if not rebuild:
                 pickle.dump(er, log)
+
     #part of the algorithm
     def hasRec(self, Ti, eR, k):
         return Ti[k][eR.node] >= eR.time
