@@ -1,5 +1,10 @@
 import json
-
+'''
+How to use this class:
+open the json file to read, and pass it to jsonparser's constructor as opened_file
+call get_dict() to get a diction with site_id as keys and site info as values.
+site info is also a dictionary with entries like 'ip_address' as key, and int or string as values.
+'''
 class jsonparser(object):
     def __init__(self, opened_file):
         self.reader = opened_file
