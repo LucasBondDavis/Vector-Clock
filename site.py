@@ -51,26 +51,27 @@ class Site(object):
     # Put an item into the dictionary and log the operations
     def insert(self, name, flights, rebuild=False):
         self.time[self.p][self.p] += 1
-        if not set(flights).isdisjoint( \
-                set([i for res in self.dict.values() for i in res.flights])):
-            print('Cannot schedule reservation for {}.'.format(name))
-            return
+        #if not set(flights).isdisjoint( \
+        #        set([i for res in self.dict.values() for i in res.flights])):
+        #    print('Cannot schedule reservation for {}.'.format(name))
+        #    return
         with open('dict.log', 'ab') as log: # append to the log
-            er = EventR('insert', name, flights, self.time, self.p)
+            er = EventR('insert', name, flights, self.time[self.p][self.p], self.p)
             self.dict[name] = Reservation(flights)
             if not rebuild:
                 pickle.dump(er, log) # put the event record in stable storage
-        print('Reservation submitted for {}.'.format(name))
+                print('Reservation submitted for {}.'.format(name))
     # Takes a username and adds a delete event to the log
     def delete(self, name, rebuild=False):
         if name not in self.dict:
             return
         self.time[self.p][self.p] += 1
         with open('dict.log', 'ab') as log:
-            er = EventR('delete', name, None, self.time, self.p)
+            er = EventR('delete', name, None, self.time[self.p][self.p], self.p)
             self.dict.pop(name)
             if not rebuild:
                 pickle.dump(er, log)
+
     #part of the algorithm
     def hasRec(self, Ti, eR, k):
         return Ti[k][eR.node] >= eR.time
@@ -126,23 +127,20 @@ class Site(object):
     def clock(self):
         for i in range(len(self.time)):
             print(' '.join(str(j) for j in self.time[i]))
-        
+    def restore(self):
+        # Restore log if the site crashed
+        log = load_log()
+        for er in log:
+            if (er.op == 'insert'):
+                self.insert(er.name, er.flights, rebuild=True)
+            if (er.op == 'delete'):
+                self.delete(er.name, rebuild=True)
 
 
 if __name__ == '__main__':
     # Create log based dict
     dist_dict = Site(3, 0)
-
-    # Restore log if the site crashed
-    log = load_log()
-    for er in log:
-        if (er.op == 'insert'):
-            dist_dict.insert(er.name, er.flights, rebuild=True)
-        if (er.op == 'delete'):
-            dist_dict.delete(er.name, rebuild=True)
-
-    #data, addr = sock.recvfrom(1024) # 1024 is the buffer size
-    #print('received {} bytes'.format(len(data)));
+    dist_dict.restore()
 
     if (sys.argv[1] == '0'):
         dist_dict.insert('Dan',  ['3'])
