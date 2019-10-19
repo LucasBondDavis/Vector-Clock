@@ -108,10 +108,29 @@ class Site(object):
             if dR.op == 'delete' and dR.name in Vi and Vi[dR.name].flights == dR.flights: # comparing list in python, need changes?
                 Vi.pop[dR.name]
     #update matrix clock.
+    def update_matrix_clock(self, Tk, sender_site_id):
+        k = sender_site_id
+        Ti = self.time
+        N = len(self.time)
+        for r in range( N ):
+            Ti[self.p][r] = max(Ti[self.p][r], Tk[k][r] )
+        for r in range(N):
+            for s in range(N):
+                Ti[r][s] = max( Ti[r][s], Tk[r][s] )
     
     # When we know every other process know of an event, truncate the log
     def truncate(self):
         pass # TODO: implement this
+    
+    # receive function from the algo
+    def receive(self, log_entries, received_matrix_clock, sender_site_id ):
+        NP = log_entries
+        Tk = received_matrix_clock
+        NE = self.get_NE(NP)
+        self.update_vi(NE)
+        self.update_matrix_clock(Tk, sender_site_id )
+        self.truncate()
+        
     # View the contents of the log
     def print_log(self):
         log = load_log()
