@@ -7,8 +7,8 @@ from dataclasses import dataclass
 # Loads a pickled event records from dict.log into a list
 def load_log():
     l = []
-    if os.path.exists('dict.log'):
-        with open('dict.log', 'rb') as log: # append to the log
+    if os.path.exists('events.log'):
+        with open('events.log', 'rb') as log: # append to the log
             while(True):
                 try:
                     er = pickle.load(log)
@@ -50,33 +50,37 @@ class Site(object):
         self.id = site_id # TODO: figure out way to have a process id
         self.dict = {}
     # Put an item into the dictionary and log the operations
-    def insert(self, name, flights, rebuild=False, recv=False):
-        self.time[self.site_id][self.site_id] += 1
+    def insert(self, name, flights, recv=False):
+        self.time[self.id][self.id] += 1
         #if not set(flights).isdisjoint( \ #TODO: ENABLE
         #        set([i for res in self.dict.values() for i in res.flights])):
         #    print('Cannot schedule reservation for {}.'.format(name))
         #    return
-        with open('dict.log', 'ab') as log: # append to the log
+        with open('events.log', 'ab') as log: # append to the log
             er = EventR('insert', name, flights, \
-                    self.time[self.site_id][self.site_id], self.site_id)
+                    self.time[self.id][self.id], self.id)
             self.dict[name] = Reservation(flights)
-            if not rebuild:
-                pickle.dump(er, log) # put the event record in stable storage
-                if not recv:
-                    print('Reservation submitted for {}.'.format(name))
+            pickle.dump(er, log) # put the event record in stable storage
+        with open('dict.log', 'wb') as log:
+            pickle.dump((self.dict, self.time), log)
+            log.truncate()
+        if not recv:
+            print('Reservation submitted for {}.'.format(name))
     # Takes a username and adds a delete event to the log
-    def delete(self, name, rebuild=False, recv=False):
+    def delete(self, name, recv=False):
         if name not in self.dict:
             return
-        self.time[self.site_id][self.site_id] += 1
+        self.time[self.id][self.id] += 1
         with open('dict.log', 'ab') as log:
             er = EventR('delete', name, None, \
-                    self.time[self.site_id][self.site_id], self.site_id)
+                    self.time[self.id][self.id], self.id)
             self.dict.pop(name)
-            if not rebuild:
-                pickle.dump(er, log)
-                if not recv:
-                    print('Reservation for {} canceled.'.format(name))
+            pickle.dump(er, log)
+        with open('dict.log', 'wb') as log:
+            pickle.dump((self.dict, self.time), log)
+            log.truncate()
+        if not recv:
+            print('Reservation for {} canceled.'.format(name))
     #part of the algorithm
     def hasRec(self, Ti, eR, k):
         return Ti[k][eR.node] >= eR.time
@@ -93,7 +97,7 @@ class Site(object):
     # figure out what NE is after received a message, and calling receive().
     def update_dict(self, NP):
         NE = set()
-        i = self.site_id
+        i = self.id
         Ti = self.time
         for fR in NP:
             if self.hasRec(Ti, fR, i) == False:
@@ -105,14 +109,14 @@ class Site(object):
                 self.insert(eR.name, eR.flights, recv=True)
             if dR.op == 'delete': 
                 self.delete(eR.name, recv=True)
-        self.time[self.site_id][self.site_id] -= len(NE)
+        self.time[self.id][self.id] -= len(NE)
     #update matrix clock.
-    def update_matrix_clock(self, Tk, sender_site_id):
+    def update_matrix_clock(self, Tk, sender_id):
         k = sender_site_id
         Ti = self.time
         N = len(self.time)
         for r in range(N):
-            Ti[self.site_id][r] = max(Ti[self.site_id][r], Tk[k][r] )
+            Ti[self.id][r] = max(Ti[self.id][r], Tk[k][r] )
         for r in range(N):
             for s in range(N):
                 Ti[r][s] = max( Ti[r][s], Tk[r][s] ) 
@@ -136,12 +140,11 @@ class Site(object):
             print(' '.join(str(j) for j in self.time[i]))
     def restore(self):
         # Restore log if the site crashed
-        log = load_log()
-        for er in log:
-            if (er.op == 'insert'):
-                self.insert(er.name, er.flights, rebuild=True)
-            if (er.op == 'delete'):
-                self.delete(er.name, rebuild=True)
+        if os.path.exists('dict.log'):
+            with open('dict.log', 'rb') as backup:
+                d, T = pickle.load(backup)
+                self.dict = d
+                self.time = T
 
 
 if __name__ == '__main__':

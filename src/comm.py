@@ -3,7 +3,6 @@ import select
 import json
 
 from DSAsite import *
-from jsonparser import jsonparser
 
 # TODO: make dictinary of other sites and their IP addresses and Ports
 with open('bin/knownhosts.json', 'r') as knownhosts:
