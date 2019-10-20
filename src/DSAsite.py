@@ -105,6 +105,7 @@ class Site(object):
                 self.insert(eR.name, eR.flights, recv=True)
             if dR.op == 'delete': 
                 self.delete(eR.name, recv=True)
+        self.time[self.site_id][self.site_id] -= len(NE)
     #update matrix clock.
     def update_matrix_clock(self, Tk, sender_site_id):
         k = sender_site_id

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-rm -rf bin # clean bin
+#rm -rf bin # clean bin
 mkdir bin
 
 
