@@ -5,7 +5,7 @@ import json
 from DSAsite import *
 
 # TODO: make dictinary of other sites and their IP addresses and Ports
-with open('bin/knownhosts.json', 'r') as knownhosts:
+with open('knownhosts.json', 'r') as knownhosts:
     site_dict = json.load(knownhosts)['hosts']
     for i, host in enumerate(sorted(site_dict.keys())):
         site_dict[host]['pid'] = i

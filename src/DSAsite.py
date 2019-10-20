@@ -20,9 +20,11 @@ def load_log():
 
 #@dataclass
 class Reservation(object):
-    def __init__(self, flights):
+    def __init__(self, flights, time, node):
         self.flights = flights
         self.status = 'pending'
+        self.time = time
+        self.node = node
 
 
 # A simple class to store event records
@@ -36,7 +38,7 @@ class EventR(object):
     def __repr__(self):
         op = self.op
         name = self.name
-        if (op == 'insert'):
+        if (op == 'insert' or op == 'confirm'):
             flights = ','.join(self.flights)
             return '{} {} {}'.format(op, name, flights)
         if (op == 'delete'):
@@ -52,15 +54,15 @@ class Site(object):
         self.dict = {}
     # Put an item into the dictionary and log the operations
     def insert(self, name, flights, recv=False):
-        self.time[self.id][self.id] += 1
         #if not set(flights).isdisjoint( \ #TODO: ENABLE
         #        set([i for res in self.dict.values() for i in res.flights])):
         #    print('Cannot schedule reservation for {}.'.format(name))
         #    return
+        self.time[self.id][self.id] += 1
+        self.dict[name] = Reservation(flights, self.time[self.id][:], self.id)
         with open('events.log', 'ab') as log: # append to the log
             er = EventR('insert', name, flights, \
                     self.time[self.id][self.id], self.id)
-            self.dict[name] = Reservation(flights)
             pickle.dump(er, log) # put the event record in stable storage
         with open('dict.log', 'wb') as log:
             pickle.dump((self.dict, self.time), log)
@@ -72,16 +74,41 @@ class Site(object):
         if name not in self.dict:
             return
         self.time[self.id][self.id] += 1
+        self.dict.pop(name)
         with open('dict.log', 'ab') as log:
             er = EventR('delete', name, None, \
                     self.time[self.id][self.id], self.id)
-            self.dict.pop(name)
             pickle.dump(er, log)
         with open('dict.log', 'wb') as log:
             pickle.dump((self.dict, self.time), log)
             log.truncate()
         if not recv:
             print('Reservation for {} canceled.'.format(name))
+    def check_flights(self, name):
+        res_list = sorted(self.dict.items(), \
+                key = lambda x: x[1].time[x[1].node])
+        avail_flights = {}
+        for name, res in res_list:
+            for f in res.flights:
+                if f not in avail_flights:
+                    avail_flights[f] = []
+                avail_flights[f].append(name)
+        print(avail_flights)
+            
+    def confirm(self, name):
+        if not self.check_flights(name):
+            self.delete(eR.name)
+            return
+        self.time[self.id][self.id] += 1
+        self.dict[name].status = 'confirmed'
+        with open('events.log', 'ab') as log:
+            er = EventR('confirm', name, self.dict[name].flights, \
+                    self.time[self.id][self.id], self.id)
+            pickle.dump(er, log) # put the event record in stable storage
+        with open('dict.log', 'wb') as log:
+            pickle.dump((self.dict, self.time), log)
+            log.truncate()
+        print('Reservation confirmed for {}.'.format(name)) 
     #part of the algorithm
     def hasRec(self, Ti, eR, k):
         return Ti[k][eR.node] >= eR.time
@@ -94,6 +121,13 @@ class Site(object):
         for eR in PLi:
             if self.hasRec(Ti, eR, j) == False:
                 NP.add(eR)
+        return NP
+    def get_partial_log_all(self):
+        NP = set()
+        for i in range(len(self.time)):
+            if i == self.id:
+                continue
+            NP = NP | self.get_partial_log(i)
         return NP
     # figure out what NE is after received a message, and calling receive().
     def update_dict(self, NP):
@@ -113,7 +147,7 @@ class Site(object):
         self.time[self.id][self.id] -= len(NE)
     #update matrix clock.
     def update_matrix_clock(self, Tk, sender_id):
-        k = sender_site_id
+        k = sender_id
         Ti = self.time
         N = len(self.time)
         for r in range(N):
@@ -151,12 +185,13 @@ class Site(object):
 if __name__ == '__main__':
     # Create log based dict
     dist_dict = Site(3, 'apple', 0)
-    dist_dict.restore()
+    #dist_dict.restore()
 
     if (sys.argv[1] == '0'):
         dist_dict.insert('Dan',  ['3'])
         dist_dict.insert('Arin',  ['1','2'])
         dist_dict.insert('Hank', ['1'])
+        dict_dict.confirm('Arin')
     if (sys.argv[1] == '1'):
         dist_dict.delete('Arin')
 
