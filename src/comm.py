@@ -1,12 +1,20 @@
 import socket
 import select
+import json
 
 from DSAsite import *
+from jsonparser import jsonparser
 
 # TODO: make dictinary of other sites and their IP addresses and Ports
+with open('bin/knownhosts.json', 'r') as knownhosts:
+    site_dict = json.load(knownhosts)['hosts']
+    for i, host in enumerate(sorted(site_dict.keys())):
+        site_dict[host]['pid'] = i
+
 # Set port and IP address for local site
-IP = '127.0.0.1'
-PORT = 8080
+site_name = sys.argv[1]
+IP = site_dict[site_name]['ip_address']
+PORT = site_dict[site_name]['udp_start_port']
 
 # Make socket and bind address and port to it
 site_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -14,11 +22,10 @@ siteaddr = (IP, PORT)
 site_sock.bind(siteaddr)
 
 if __name__ == '__main__':
-    print('Starting server at IP: {} and PORT: {}'.format(*siteaddr))
-    site = Site(2, 'banana')
+    #print('Starting server at IP: {} and PORT: {}'.format(*siteaddr))
+    site = Site(len(site_dict), site_name, site_dict[site_name]['pid'])
     site.restore()
     while(True):
-        print('waiting for input/msg')
         socket_list = [sys.stdin, site_sock]
         r_socks, _, _ = select.select(socket_list, [], [])
         command = None
@@ -35,7 +42,7 @@ if __name__ == '__main__':
             NPk, Tk = pickle.loads(msg)
             site.update_dict(NPk)
             site.update_matrix_clock(Tk, 0)
-            print('recv')
+            site.truncate()
         if command == 'reserve':
             flights = args.pop().split(',')
             clientName = args.pop()
