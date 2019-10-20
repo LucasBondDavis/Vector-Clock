@@ -23,6 +23,7 @@ class Reservation:
     flights: list
     status: str = 'pending'
 
+
 # A simple class to store event records
 class EventR(object):
     def __init__(self, op, name, flights, time, node):
@@ -49,9 +50,9 @@ class Site(object):
         self.p = 0 # TODO: figure out way to have a process id
         self.dict = {}
     # Put an item into the dictionary and log the operations
-    def insert(self, name, flights, rebuild=False):
+    def insert(self, name, flights, rebuild=False, recv=False):
         self.time[self.p][self.p] += 1
-        #if not set(flights).isdisjoint( \
+        #if not set(flights).isdisjoint( \ #TODO: ENABLE
         #        set([i for res in self.dict.values() for i in res.flights])):
         #    print('Cannot schedule reservation for {}.'.format(name))
         #    return
@@ -60,9 +61,10 @@ class Site(object):
             self.dict[name] = Reservation(flights)
             if not rebuild:
                 pickle.dump(er, log) # put the event record in stable storage
-                print('Reservation submitted for {}.'.format(name))
+                if not recv:
+                    print('Reservation submitted for {}.'.format(name))
     # Takes a username and adds a delete event to the log
-    def delete(self, name, rebuild=False):
+    def delete(self, name, rebuild=False, recv=False):
         if name not in self.dict:
             return
         self.time[self.p][self.p] += 1
@@ -71,12 +73,14 @@ class Site(object):
             self.dict.pop(name)
             if not rebuild:
                 pickle.dump(er, log)
+                if not recv:
+                    print('Reservation for {} canceled.'.format(name))
 
     #part of the algorithm
     def hasRec(self, Ti, eR, k):
         return Ti[k][eR.node] >= eR.time
     #figure out what NP is when sending a message to another site
-    def get_NP(self, target_site_id):
+    def get_partial_log(self, target_site_id):
         NP = set()
         j = target_site_id
         Ti = self.time
@@ -86,33 +90,26 @@ class Site(object):
                 NP.add(eR)
         return NP
     # figure out what NE is after received a message, and calling receive().
-    def get_NE(self, NP):
+    def update_dict(self, NP):
         NE = set()
         i = self.p
         Ti = self.time
         for fR in NP:
             if self.hasRec(Ti, fR, i) == False:
                 NE.add(fR)
-        return NE
-    # update dictionary when calling the receive function
-    def update_vi(self, NE):
-        Vi = self.dict
-        #updating Vi is updating self.dict?
-        for eR in NE:
+        for eR in list(NE):
             if eR.op == 'insert':
-                if eR.name in Vi and eR.time:
-                    # eR.name in Vi(self.dict) might happen if the client cancels a previous reservation and add a new one?
-                    print('overwriting an entry in dictionary')
-                Vi[eR.name] = Reservation(eR.flights)
-        for dR in NE:
-            if dR.op == 'delete' and dR.name in Vi and Vi[dR.name].flights == dR.flights: # comparing list in python, need changes?
-                Vi.pop[dR.name]
+                #if eR.name in Vi and eR.time:
+                #    print('overwriting an entry in dictionary')
+                self.insert(eR.name, eR.flights, recv=True)
+            if dR.op == 'delete': 
+                self.delete(eR.name, recv=True)
     #update matrix clock.
     def update_matrix_clock(self, Tk, sender_site_id):
         k = sender_site_id
         Ti = self.time
         N = len(self.time)
-        for r in range( N ):
+        for r in range(N):
             Ti[self.p][r] = max(Ti[self.p][r], Tk[k][r] )
         for r in range(N):
             for s in range(N):
@@ -158,7 +155,7 @@ class Site(object):
 
 if __name__ == '__main__':
     # Create log based dict
-    dist_dict = Site(3, 0)
+    dist_dict = Site(3, 'apple')
     dist_dict.restore()
 
     if (sys.argv[1] == '0'):

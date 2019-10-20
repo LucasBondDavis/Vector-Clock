@@ -1,8 +1,7 @@
 import socket
 import select
 
-from Site import *
-
+from DSAsite import *
 
 # TODO: make dictinary of other sites and their IP addresses and Ports
 # Set port and IP address for local site
@@ -16,9 +15,10 @@ site_sock.bind(siteaddr)
 
 if __name__ == '__main__':
     print('Starting server at IP: {} and PORT: {}'.format(*siteaddr))
-    site = Site(2, 0)
+    site = Site(2, 'banana')
     site.restore()
     while(True):
+        print('waiting for input/msg')
         socket_list = [sys.stdin, site_sock]
         r_socks, _, _ = select.select(socket_list, [], [])
         command = None
@@ -30,9 +30,12 @@ if __name__ == '__main__':
                 command = input()
 
         if command is not None:
-            command, *args = user_input.split()
+            command, *args = command.split()
         if msg is not None:
-            pass
+            NPk, Tk = pickle.loads(msg)
+            site.update_dict(NPk)
+            site.update_matrix_clock(Tk, 0)
+            print('recv')
         if command == 'reserve':
             flights = args.pop().split(',')
             clientName = args.pop()
@@ -50,7 +53,9 @@ if __name__ == '__main__':
             site.clock()
         elif command == 'send':
             siteId = args.pop()
-            # LOOK up port and address
-        else: # command is quit
+            # TODO: Look up port and address
+            msg = pickle.dumps((site.get_partial_log(1), site.time))
+            site_sock.sendto(msg, siteaddr)
+        elif command == 'quit': # command is quit
             break
 
