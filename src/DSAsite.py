@@ -1,7 +1,7 @@
 import sys
 import os
 import pickle
-from dataclasses import dataclass
+#from dataclasses import dataclass
 
 
 # Loads a pickled event records from dict.log into a list
@@ -18,10 +18,11 @@ def load_log():
     return l
 
 
-@dataclass
-class Reservation:
-    flights: list
-    status: str = 'pending'
+#@dataclass
+class Reservation(object):
+    def __init__(self, flights):
+        self.flights = flights
+        self.status = 'pending'
 
 
 # A simple class to store event records
